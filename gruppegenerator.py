@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import random
-from collections import defaultdict
 import os
 
 st.title("🎲 Tilfældig Gruppegenerator med billeder")
@@ -23,8 +22,20 @@ def find_image(name, folder="Billeder af studerende"):
         base, ext = os.path.splitext(file)
         if base == str(name) and ext.lower() in [".jpg", ".jpeg", ".png"]:
             return os.path.join(folder, file)
-    st.caption(f"❓ Intet billede fundet til: {name}")
     return None
+
+# Funktion til at lave grupper uden rester
+def make_groups(students, group_size):
+    random.shuffle(students)
+    groups = [students[i:i + group_size] for i in range(0, len(students), group_size)]
+
+    # Hvis sidste gruppe er meget lille, fordel resterne ud i de andre grupper
+    if len(groups) > 1 and len(groups[-1]) < group_size // 2:
+        leftovers = groups.pop()
+        for i, student in enumerate(leftovers):
+            groups[i % len(groups)].append(student)
+
+    return groups
 
 # Upload CSV
 file = st.file_uploader("Upload CSV", type=["csv"])
@@ -74,39 +85,17 @@ if file:
                 if not students:
                     st.warning("Ingen studerende er valgt som til stede.")
                 else:
-                    random.shuffle(students)
-
-                    by_semester = defaultdict(list)
-                    for name, sem in students:
-                        by_semester[sem].append(name)
-
-                    groups = []
-                    remaining = students.copy()
-
-                    # Lav grupper med mindst én fra hvert semester
-                    while all(by_semester.values()):
-                        group = []
-                        for sem in list(by_semester.keys()):
-                            if by_semester[sem]:
-                                group.append(by_semester[sem].pop())
-                                remaining = [s for s in remaining if s[0] != group[-1]]
-                        while len(group) < group_size and remaining:
-                            name, _ = remaining.pop()
-                            group.append(name)
-                        groups.append(group)
-
-                    if remaining:
-                        groups.append([s[0] for s in remaining])
+                    groups = make_groups(students, group_size)
 
                     # Vis grupperne
                     for i, g in enumerate(groups, 1):
                         st.subheader(f"Gruppe {i}")
                         cols = st.columns(len(g))
-                        for col, name in zip(cols, g):
+                        for col, (name, _) in zip(cols, g):
                             with col:
                                 st.write(name)
                                 img = find_image(name)
                                 if img:
-                                    st.image(img, width=100)
+                                    st.image(img, width=120)
                                 else:
                                     st.caption("❌ Intet billede")
