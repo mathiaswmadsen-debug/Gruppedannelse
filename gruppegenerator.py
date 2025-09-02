@@ -58,59 +58,51 @@ if file:
                 f"Jeg fandt i stedet: {list(df.columns)}"
             )
         else:
-            # Vælg mode
-            mode = st.radio("Vælg visning:", ["Normal", "Præsentationsmode"])
+            st.subheader("✔️ Vælg hvilke studerende der er til stede i dag")
 
-            if mode == "Normal":
-                st.subheader("✔️ Vælg hvilke studerende der er til stede i dag")
+            presence = {}
+            for _, row in df.iterrows():
+                navn, sem = row["Navn"], row["Semester"]
+                col1, col2 = st.columns([1, 3])
 
-                presence = {}
-                for _, row in df.iterrows():
-                    navn, sem = row["Navn"], row["Semester"]
-                    col1, col2 = st.columns([1, 3])
-
-                    with col1:
-                        img = find_image(navn)
-                        if img:
-                            st.image(img, width=80)
-                        else:
-                            st.caption("❌ Intet billede")
-
-                    with col2:
-                        presence[navn] = st.checkbox(f"{navn} (Semester {sem})", value=True)
-
-                # Filtrér de studerende som er til stede
-                students = [(row["Navn"], row["Semester"]) 
-                            for _, row in df.iterrows() if presence[row["Navn"]]]
-
-                st.markdown("---")
-                group_size = st.number_input(
-                    "Hvor mange personer pr. gruppe?", min_value=2, max_value=10, value=3
-                )
-
-                if st.button("Lav grupper"):
-                    if not students:
-                        st.warning("Ingen studerende er valgt som til stede.")
+                with col1:
+                    img = find_image(navn)
+                    if img:
+                        st.image(img, width=80)
                     else:
-                        st.session_state["groups"] = make_groups(students, group_size)
-                        st.success("✅ Grupperne er dannet! Skift til 'Præsentationsmode' for at vise dem.")
+                        st.caption("❌ Intet billede")
 
-            else:  # Præsentationsmode
-                if not st.session_state["groups"]:
-                    st.warning("Ingen grupper er dannet endnu. Gå til 'Normal' først og lav grupper.")
+                with col2:
+                    presence[navn] = st.checkbox(f"{navn} (Semester {sem})", value=True)
+
+            # Filtrér de studerende som er til stede
+            students = [(row["Navn"], row["Semester"]) 
+                        for _, row in df.iterrows() if presence[row["Navn"]]]
+
+            st.markdown("---")
+            group_size = st.number_input(
+                "Hvor mange personer pr. gruppe?", min_value=2, max_value=10, value=3
+            )
+
+            if st.button("Lav grupper"):
+                if not students:
+                    st.warning("Ingen studerende er valgt som til stede.")
                 else:
-                    groups = st.session_state["groups"]
+                    st.session_state["groups"] = make_groups(students, group_size)
 
-                    st.markdown("## 📺 Præsentationsmode")
-                    cols_per_row = 8  # fast 8 grupper pr. række
+if st.session_state["groups"]:
+    groups = st.session_state["groups"]
 
-                    for i in range(0, len(groups), cols_per_row):
-                        row = st.columns(cols_per_row)
-                        for col, (j, g) in zip(row, enumerate(groups[i:i+cols_per_row], start=i+1)):
-                            with col:
-                                st.markdown(f"### Gruppe {j}")
-                                for name, _ in g:
-                                    st.write(name)
-                                    img = find_image(name)
-                                    if img:
-                                        st.image(img, width=70)
+    st.markdown("## 📺 Præsentationsmode")
+    cols_per_row = 8  # fast 8 grupper pr. række
+
+    for i in range(0, len(groups), cols_per_row):
+        row = st.columns(cols_per_row)
+        for col, (j, g) in zip(row, enumerate(groups[i:i+cols_per_row], start=i+1)):
+            with col:
+                st.markdown(f"### Gruppe {j}")
+                for name, _ in g:
+                    st.write(name)
+                    img = find_image(name)
+                    if img:
+                        st.image(img, width=70)
