@@ -2,14 +2,15 @@ import streamlit as st
 import pandas as pd
 import random
 from collections import defaultdict
+import os
 
-st.title("🎲 Tilfældig Gruppegenerator")
+st.title("🎲 Tilfældig Gruppegenerator med billeder")
 
 st.markdown(
     """
     Upload en CSV med dine studerende (to kolonner: **Navn,Semester**).  
-    Vælg hvem der er til stede, indstil gruppestørrelse, og tryk på knappen for at få tilfældige grupper, 
-    hvor hvert semester er repræsenteret.
+    Sørg for at du har en mappe kaldet **billeder/** med et billede til hver studerende, 
+    hvor filnavnet matcher navnet i CSV (fx *Anders.jpg*).
     """
 )
 
@@ -18,9 +19,7 @@ file = st.file_uploader("Upload CSV", type=["csv"])
 
 if file:
     try:
-        # Automatisk detektering af separator (virker til både , og ;)
         df = pd.read_csv(file, sep=None, engine="python")
-        # Rens kolonnenavne (fjerner BOM og mellemrum)
         df.columns = df.columns.str.strip().str.replace("\ufeff", "")
     except Exception as e:
         st.error(f"Kunne ikke læse CSV-filen: {e}")
@@ -33,12 +32,21 @@ if file:
                 f"Jeg fandt i stedet: {list(df.columns)}"
             )
         else:
-            # Liste med checkboxes til tilstedeværelse
             st.subheader("✔️ Vælg hvilke studerende der er til stede i dag")
+
+            image_folder = "billeder"  # mappe med billeder
             presence = {}
+
             for _, row in df.iterrows():
                 navn, sem = row["Navn"], row["Semester"]
-                presence[navn] = st.checkbox(f"{navn} (Semester {sem})", value=True)
+                col1, col2 = st.columns([1, 3])
+
+                with col1:
+                    image_path = os.path.join(image_folder, f"{navn}.jpg")
+                    if os.path.exists(image_path):
+                        st.image(image_path, width=80)
+                with col2:
+                    presence[navn] = st.checkbox(f"{navn} (Semester {sem})", value=True)
 
             # Filtrér de studerende som er til stede
             students = [(row["Navn"], row["Semester"]) 
@@ -74,11 +82,16 @@ if file:
                             group.append(name)
                         groups.append(group)
 
-                    # Tilføj evt. resterende studerende
                     if remaining:
                         groups.append([s[0] for s in remaining])
 
                     # Vis grupperne
                     for i, g in enumerate(groups, 1):
                         st.subheader(f"Gruppe {i}")
-                        st.write(", ".join(g))
+                        cols = st.columns(len(g))
+                        for col, name in zip(cols, g):
+                            with col:
+                                st.write(name)
+                                image_path = os.path.join(image_folder, f"{name}.jpg")
+                                if os.path.exists(image_path):
+                                    st.image(image_path, width=100)
