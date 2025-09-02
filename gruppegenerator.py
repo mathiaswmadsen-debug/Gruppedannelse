@@ -24,11 +24,6 @@ st.markdown("""
     text-align: center;
     margin-bottom: 10px;
 }
-.group-name {
-    font-size: 14px !important;
-    text-align: center;
-    margin-bottom: 5px;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -121,7 +116,9 @@ if st.session_state["groups"]:
             with col:
                 st.markdown(f"<div class='group-title'>Gruppe {j}</div>", unsafe_allow_html=True)
                 for name, _ in g:
-                    st.markdown(f"<div class='group-name'>{name}</div>", unsafe_allow_html=True)
                     img = find_image(name)
                     if img:
-                        st.image(img, width=70)
+                        # navn vises som caption under billedet, automatisk centreret
+                        st.image(img, width=70, caption=name)
+                    else:
+                        st.caption(f"{name}\n❌ Intet billede")
