@@ -8,7 +8,7 @@ st.title("🎲 Tilfældig Gruppegenerator")
 st.markdown(
     """
     Upload en CSV med dine studerende (to kolonner: **Navn,Semester**).  
-    Vælg gruppestørrelse og tryk på knappen for at få tilfældige grupper, 
+    Vælg hvem der er til stede, indstil gruppestørrelse, og tryk på knappen for at få tilfældige grupper, 
     hvor hvert semester er repræsenteret.
     """
 )
@@ -33,39 +33,52 @@ if file:
                 f"Jeg fandt i stedet: {list(df.columns)}"
             )
         else:
-            students = [(row["Navn"], row["Semester"]) for _, row in df.iterrows()]
+            # Liste med checkboxes til tilstedeværelse
+            st.subheader("✔️ Vælg hvilke studerende der er til stede i dag")
+            presence = {}
+            for _, row in df.iterrows():
+                navn, sem = row["Navn"], row["Semester"]
+                presence[navn] = st.checkbox(f"{navn} (Semester {sem})", value=True)
 
+            # Filtrér de studerende som er til stede
+            students = [(row["Navn"], row["Semester"]) 
+                        for _, row in df.iterrows() if presence[row["Navn"]]]
+
+            st.markdown("---")
             group_size = st.number_input(
                 "Hvor mange personer pr. gruppe?", min_value=2, max_value=10, value=3
             )
 
             if st.button("Lav grupper"):
-                random.shuffle(students)
+                if not students:
+                    st.warning("Ingen studerende er valgt som til stede.")
+                else:
+                    random.shuffle(students)
 
-                by_semester = defaultdict(list)
-                for name, sem in students:
-                    by_semester[sem].append(name)
+                    by_semester = defaultdict(list)
+                    for name, sem in students:
+                        by_semester[sem].append(name)
 
-                groups = []
-                remaining = students.copy()
+                    groups = []
+                    remaining = students.copy()
 
-                # Lav grupper med mindst én fra hvert semester
-                while all(by_semester.values()):
-                    group = []
-                    for sem in list(by_semester.keys()):
-                        if by_semester[sem]:
-                            group.append(by_semester[sem].pop())
-                            remaining = [s for s in remaining if s[0] != group[-1]]
-                    while len(group) < group_size and remaining:
-                        name, _ = remaining.pop()
-                        group.append(name)
-                    groups.append(group)
+                    # Lav grupper med mindst én fra hvert semester
+                    while all(by_semester.values()):
+                        group = []
+                        for sem in list(by_semester.keys()):
+                            if by_semester[sem]:
+                                group.append(by_semester[sem].pop())
+                                remaining = [s for s in remaining if s[0] != group[-1]]
+                        while len(group) < group_size and remaining:
+                            name, _ = remaining.pop()
+                            group.append(name)
+                        groups.append(group)
 
-                # Tilføj evt. resterende studerende
-                if remaining:
-                    groups.append([s[0] for s in remaining])
+                    # Tilføj evt. resterende studerende
+                    if remaining:
+                        groups.append([s[0] for s in remaining])
 
-                # Vis grupperne
-                for i, g in enumerate(groups, 1):
-                    st.subheader(f"Gruppe {i}")
-                    st.write(", ".join(g))
+                    # Vis grupperne
+                    for i, g in enumerate(groups, 1):
+                        st.subheader(f"Gruppe {i}")
+                        st.write(", ".join(g))
