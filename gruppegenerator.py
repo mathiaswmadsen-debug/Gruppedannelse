@@ -15,18 +15,6 @@ st.markdown(
     """
 )
 
-# Custom CSS for pænere præsentationsmode
-st.markdown("""
-<style>
-.group-title {
-    font-size: 18px !important;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 10px;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # Funktion til at finde billeder (uanset filendelse)
 def find_image(name, folder="Billeder af studerende"):
     if not os.path.exists(folder):
@@ -114,11 +102,11 @@ if st.session_state["groups"]:
         row = st.columns(cols_per_row)
         for col, (j, g) in zip(row, enumerate(groups[i:i+cols_per_row], start=i+1)):
             with col:
-                st.markdown(f"<div class='group-title'>Gruppe {j}</div>", unsafe_allow_html=True)
+                st.markdown(f"<h4 style='text-align: center;'>Gruppe {j}</h4>", unsafe_allow_html=True)
                 for name, _ in g:
                     img = find_image(name)
                     if img:
                         # navn vises som caption under billedet, automatisk centreret
                         st.image(img, width=70, caption=name)
                     else:
-                        st.caption(f"{name}\n❌ Intet billede")
+                        st.markdown(f"<div style='text-align: center;'>{name}<br>❌ Intet billede</div>", unsafe_allow_html=True)
