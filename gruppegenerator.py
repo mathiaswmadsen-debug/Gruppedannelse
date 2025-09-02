@@ -14,12 +14,14 @@ st.markdown(
     """
 )
 
-# Funktion til at finde billeder (prøver flere filtyper)
+# Funktion til at finde billeder (prøver flere filtyper + viser debug-info)
 def find_image(name, folder="billeder af studerende"):
-    for ext in [".jpg", ".jpeg", ".png"]:
+    for ext in [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]:
         path = os.path.join(folder, f"{name}{ext}")
         if os.path.exists(path):
             return path
+    # Debug hvis intet blev fundet
+    st.caption(f"❓ Søgte efter: {folder}/{name}.jpg|jpeg|png")
     return None
 
 # Upload CSV
