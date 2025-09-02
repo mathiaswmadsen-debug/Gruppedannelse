@@ -17,45 +17,50 @@ st.markdown(
 file = st.file_uploader("Upload CSV", type=["csv"])
 
 if file:
-    df = pd.read_csv(file)
-    if not {"Navn", "Semester"}.issubset(df.columns):
-        st.error("CSV skal indeholde kolonnerne 'Navn' og 'Semester'")
-    else:
-        students = [(row["Navn"], row["Semester"]) for _, row in df.iterrows()]
+    try:
+        # Automatisk detektering af separator (virker til både , og ;)
+        df = pd.read_csv(file, sep=None, engine="python")
+    except Exception as e:
+        st.error(f"Kunne ikke læse CSV-filen: {e}")
+        df = None
 
-        group_size = st.number_input(
-            "Hvor mange personer pr. gruppe?", min_value=2, max_value=10, value=3
-        )
+    if df is not None:
+        if not {"Navn", "Semester"}.issubset(df.columns):
+            st.error("CSV skal indeholde kolonnerne 'Navn' og 'Semester'")
+        else:
+            students = [(row["Navn"], row["Semester"]) for _, row in df.iterrows()]
 
-        if st.button("Lav grupper"):
-            random.shuffle(students)
+            group_size = st.number_input(
+                "Hvor mange personer pr. gruppe?", min_value=2, max_value=10, value=3
+            )
 
-            by_semester = defaultdict(list)
-            for name, sem in students:
-                by_semester[sem].append(name)
+            if st.button("Lav grupper"):
+                random.shuffle(students)
 
-            groups = []
-            remaining = students.copy()
+                by_semester = defaultdict(list)
+                for name, sem in students:
+                    by_semester[sem].append(name)
 
-            while all(by_semester.values()):
-                group = []
-                # Tag én fra hvert semester
-                for sem in list(by_semester.keys()):
-                    if by_semester[sem]:
-                        group.append(by_semester[sem].pop())
-                        # Fjern også fra remaining
-                        remaining = [s for s in remaining if s[0] != group[-1]]
-                # Fyld op hvis nødvendigt
-                while len(group) < group_size and remaining:
-                    name, _ = remaining.pop()
-                    group.append(name)
-                groups.append(group)
+                groups = []
+                remaining = students.copy()
 
-            # Hvis der er rester tilbage
-            if remaining:
-                groups.append([s[0] for s in remaining])
+                # Lav grupper med mindst én fra hvert semester
+                while all(by_semester.values()):
+                    group = []
+                    for sem in list(by_semester.keys()):
+                        if by_semester[sem]:
+                            group.append(by_semester[sem].pop())
+                            remaining = [s for s in remaining if s[0] != group[-1]]
+                    while len(group) < group_size and remaining:
+                        name, _ = remaining.pop()
+                        group.append(name)
+                    groups.append(group)
 
-            # Vis grupperne
-            for i, g in enumerate(groups, 1):
-                st.subheader(f"Gruppe {i}")
-                st.write(", ".join(g))
+                # Tilføj evt. resterende studerende
+                if remaining:
+                    groups.append([s[0] for s in remaining])
+
+                # Vis grupperne
+                for i, g in enumerate(groups, 1):
+                    st.subheader(f"Gruppe {i}")
+                    st.write(", ".join(g))
