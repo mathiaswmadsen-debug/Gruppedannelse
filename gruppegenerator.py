@@ -90,7 +90,7 @@ if file:
                     else:
                         groups = make_groups(students, group_size)
 
-                        # Vis grupperne (klassisk visning)
+                        # Vis grupperne (klassisk visning under hinanden)
                         for i, g in enumerate(groups, 1):
                             st.subheader(f"Gruppe {i}")
                             cols = st.columns(len(g))
@@ -110,11 +110,10 @@ if file:
 
                 # Alle studerende er automatisk "til stede" i præsentationsmode
                 students = [(row["Navn"], row["Semester"]) for _, row in df.iterrows()]
-
                 groups = make_groups(students, group_size)
 
                 st.markdown("## 📺 Præsentationsmode")
-                cols_per_row = 3  # antal grupper pr. række
+                cols_per_row = 8  # fast 8 grupper pr. række
 
                 for i in range(0, len(groups), cols_per_row):
                     row = st.columns(cols_per_row)
@@ -125,4 +124,4 @@ if file:
                                 st.write(name)
                                 img = find_image(name)
                                 if img:
-                                    st.image(img, width=80)
+                                    st.image(img, width=70)  # mindre billede, så flere kan være på skærmen
