@@ -16,7 +16,6 @@ st.markdown(
 # Funktion til at finde billeder (uanset filendelse)
 def find_image(name, folder="Billeder af studerende"):
     if not os.path.exists(folder):
-        st.warning(f"Mappen '{folder}' findes ikke i projektet.")
         return None
     for file in os.listdir(folder):
         base, ext = os.path.splitext(file)
@@ -87,15 +86,19 @@ if file:
                 else:
                     groups = make_groups(students, group_size)
 
-                    # Vis grupperne
-                    for i, g in enumerate(groups, 1):
-                        st.subheader(f"Gruppe {i}")
-                        cols = st.columns(len(g))
-                        for col, (name, _) in zip(cols, g):
+                    # Vælg hvor mange grupper per række
+                    cols_per_row = st.slider("Grupper per række", 1, 4, 3)
+
+                    # Vis grupperne i grid
+                    for i in range(0, len(groups), cols_per_row):
+                        row = st.columns(cols_per_row)
+                        for col, (j, g) in zip(row, enumerate(groups[i:i+cols_per_row], start=i+1)):
                             with col:
-                                st.write(name)
-                                img = find_image(name)
-                                if img:
-                                    st.image(img, width=120)
-                                else:
-                                    st.caption("❌ Intet billede")
+                                st.markdown(f"### Gruppe {j}")
+                                for name, _ in g:
+                                    st.write(name)
+                                    img = find_image(name)
+                                    if img:
+                                        st.image(img, width=100)
+                                    else:
+                                        st.caption("❌ Intet billede")
