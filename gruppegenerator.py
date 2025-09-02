@@ -9,10 +9,18 @@ st.title("🎲 Tilfældig Gruppegenerator med billeder")
 st.markdown(
     """
     Upload en CSV med dine studerende (to kolonner: **Navn,Semester**).  
-    Sørg for at du har en mappe kaldet **billeder/** med et billede til hver studerende, 
+    Sørg for at du har en mappe kaldet **billeder af studerende/** med et billede til hver studerende, 
     hvor filnavnet matcher navnet i CSV (fx *Anders.jpg*).
     """
 )
+
+# Funktion til at finde billeder (prøver flere filtyper)
+def find_image(name, folder="billeder af studerende"):
+    for ext in [".jpg", ".jpeg", ".png"]:
+        path = os.path.join(folder, f"{name}{ext}")
+        if os.path.exists(path):
+            return path
+    return None
 
 # Upload CSV
 file = st.file_uploader("Upload CSV", type=["csv"])
@@ -34,17 +42,18 @@ if file:
         else:
             st.subheader("✔️ Vælg hvilke studerende der er til stede i dag")
 
-            image_folder = "billeder af studerende"  # mappe med billeder
             presence = {}
-
             for _, row in df.iterrows():
                 navn, sem = row["Navn"], row["Semester"]
                 col1, col2 = st.columns([1, 3])
 
                 with col1:
-                    image_path = os.path.join(image_folder, f"{navn}.jpg")
-                    if os.path.exists(image_path):
-                        st.image(image_path, width=80)
+                    img = find_image(navn)
+                    if img:
+                        st.image(img, width=80)
+                    else:
+                        st.caption("❌ Intet billede")
+
                 with col2:
                     presence[navn] = st.checkbox(f"{navn} (Semester {sem})", value=True)
 
@@ -92,6 +101,8 @@ if file:
                         for col, name in zip(cols, g):
                             with col:
                                 st.write(name)
-                                image_path = os.path.join(image_folder, f"{name}.jpg")
-                                if os.path.exists(image_path):
-                                    st.image(image_path, width=100)
+                                img = find_image(name)
+                                if img:
+                                    st.image(img, width=100)
+                                else:
+                                    st.caption("❌ Intet billede")
