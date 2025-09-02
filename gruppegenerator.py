@@ -3,6 +3,8 @@ import pandas as pd
 import random
 import os
 
+st.set_page_config(layout="wide")  # udnyt hele skærmbredden
+
 st.title("🎲 Tilfældig Gruppegenerator med billeder")
 
 st.markdown(
@@ -12,6 +14,23 @@ st.markdown(
     hvor filnavnet matcher navnet i CSV (fx *Anders.png* eller *Anders.jpg*).
     """
 )
+
+# Custom CSS for pænere præsentationsmode
+st.markdown("""
+<style>
+.group-title {
+    font-size: 18px !important;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.group-name {
+    font-size: 14px !important;
+    text-align: center;
+    margin-bottom: 5px;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # Funktion til at finde billeder (uanset filendelse)
 def find_image(name, folder="Billeder af studerende"):
@@ -68,7 +87,7 @@ if file:
                 with col1:
                     img = find_image(navn)
                     if img:
-                        st.image(img, width=80)
+                        st.image(img, width=60)
                     else:
                         st.caption("❌ Intet billede")
 
@@ -100,9 +119,9 @@ if st.session_state["groups"]:
         row = st.columns(cols_per_row)
         for col, (j, g) in zip(row, enumerate(groups[i:i+cols_per_row], start=i+1)):
             with col:
-                st.markdown(f"### Gruppe {j}")
+                st.markdown(f"<div class='group-title'>Gruppe {j}</div>", unsafe_allow_html=True)
                 for name, _ in g:
-                    st.write(name)
+                    st.markdown(f"<div class='group-name'>{name}</div>", unsafe_allow_html=True)
                     img = find_image(name)
                     if img:
                         st.image(img, width=70)
