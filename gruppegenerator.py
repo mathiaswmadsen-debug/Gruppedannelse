@@ -54,47 +54,75 @@ if file:
                 f"Jeg fandt i stedet: {list(df.columns)}"
             )
         else:
-            st.subheader("✔️ Vælg hvilke studerende der er til stede i dag")
+            # Vælg mode
+            mode = st.radio("Vælg visning:", ["Normal", "Præsentationsmode"])
 
-            presence = {}
-            for _, row in df.iterrows():
-                navn, sem = row["Navn"], row["Semester"]
-                col1, col2 = st.columns([1, 3])
+            if mode == "Normal":
+                st.subheader("✔️ Vælg hvilke studerende der er til stede i dag")
 
-                with col1:
-                    img = find_image(navn)
-                    if img:
-                        st.image(img, width=80)
+                presence = {}
+                for _, row in df.iterrows():
+                    navn, sem = row["Navn"], row["Semester"]
+                    col1, col2 = st.columns([1, 3])
+
+                    with col1:
+                        img = find_image(navn)
+                        if img:
+                            st.image(img, width=80)
+                        else:
+                            st.caption("❌ Intet billede")
+
+                    with col2:
+                        presence[navn] = st.checkbox(f"{navn} (Semester {sem})", value=True)
+
+                # Filtrér de studerende som er til stede
+                students = [(row["Navn"], row["Semester"]) 
+                            for _, row in df.iterrows() if presence[row["Navn"]]]
+
+                st.markdown("---")
+                group_size = st.number_input(
+                    "Hvor mange personer pr. gruppe?", min_value=2, max_value=10, value=3
+                )
+
+                if st.button("Lav grupper"):
+                    if not students:
+                        st.warning("Ingen studerende er valgt som til stede.")
                     else:
-                        st.caption("❌ Intet billede")
+                        groups = make_groups(students, group_size)
 
-                with col2:
-                    presence[navn] = st.checkbox(f"{navn} (Semester {sem})", value=True)
+                        # Vis grupperne (klassisk visning)
+                        for i, g in enumerate(groups, 1):
+                            st.subheader(f"Gruppe {i}")
+                            cols = st.columns(len(g))
+                            for col, (name, _) in zip(cols, g):
+                                with col:
+                                    st.write(name)
+                                    img = find_image(name)
+                                    if img:
+                                        st.image(img, width=100)
+                                    else:
+                                        st.caption("❌ Intet billede")
 
-            # Filtrér de studerende som er til stede
-            students = [(row["Navn"], row["Semester"]) 
-                        for _, row in df.iterrows() if presence[row["Navn"]]]
+            else:  # Præsentationsmode
+                group_size = st.number_input(
+                    "Hvor mange personer pr. gruppe?", min_value=2, max_value=10, value=3
+                )
 
-            st.markdown("---")
-            group_size = st.number_input(
-                "Hvor mange personer pr. gruppe?", min_value=2, max_value=10, value=3
-            )
+                # Alle studerende er automatisk "til stede" i præsentationsmode
+                students = [(row["Navn"], row["Semester"]) for _, row in df.iterrows()]
 
-            if st.button("Lav grupper"):
-                if not students:
-                    st.warning("Ingen studerende er valgt som til stede.")
-                else:
-                    groups = make_groups(students, group_size)
+                groups = make_groups(students, group_size)
 
-                    # Vis grupperne (klassisk, under hinanden)
-                    for i, g in enumerate(groups, 1):
-                        st.subheader(f"Gruppe {i}")
-                        cols = st.columns(len(g))
-                        for col, (name, _) in zip(cols, g):
-                            with col:
+                st.markdown("## 📺 Præsentationsmode")
+                cols_per_row = 3  # antal grupper pr. række
+
+                for i in range(0, len(groups), cols_per_row):
+                    row = st.columns(cols_per_row)
+                    for col, (j, g) in zip(row, enumerate(groups[i:i+cols_per_row], start=i+1)):
+                        with col:
+                            st.markdown(f"### Gruppe {j}")
+                            for name, _ in g:
                                 st.write(name)
                                 img = find_image(name)
                                 if img:
-                                    st.image(img, width=100)
-                                else:
-                                    st.caption("❌ Intet billede")
+                                    st.image(img, width=80)
