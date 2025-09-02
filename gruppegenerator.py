@@ -34,7 +34,7 @@ if file:
         else:
             st.subheader("✔️ Vælg hvilke studerende der er til stede i dag")
 
-            image_folder = "billeder"  # mappe med billeder
+            image_folder = "billeder af studerende"  # mappe med billeder
             presence = {}
 
             for _, row in df.iterrows():
