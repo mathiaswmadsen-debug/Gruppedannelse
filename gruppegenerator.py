@@ -39,6 +39,10 @@ def make_groups(students, group_size):
 # Upload CSV
 file = st.file_uploader("Upload CSV", type=["csv"])
 
+# Session state til at gemme grupper
+if "groups" not in st.session_state:
+    st.session_state["groups"] = None
+
 if file:
     try:
         df = pd.read_csv(file, sep=None, engine="python")
@@ -88,40 +92,25 @@ if file:
                     if not students:
                         st.warning("Ingen studerende er valgt som til stede.")
                     else:
-                        groups = make_groups(students, group_size)
+                        st.session_state["groups"] = make_groups(students, group_size)
+                        st.success("✅ Grupperne er dannet! Skift til 'Præsentationsmode' for at vise dem.")
 
-                        # Vis grupperne (klassisk visning under hinanden)
-                        for i, g in enumerate(groups, 1):
-                            st.subheader(f"Gruppe {i}")
-                            cols = st.columns(len(g))
-                            for col, (name, _) in zip(cols, g):
-                                with col:
+            else:  # Præsentationsmode
+                if not st.session_state["groups"]:
+                    st.warning("Ingen grupper er dannet endnu. Gå til 'Normal' først og lav grupper.")
+                else:
+                    groups = st.session_state["groups"]
+
+                    st.markdown("## 📺 Præsentationsmode")
+                    cols_per_row = 8  # fast 8 grupper pr. række
+
+                    for i in range(0, len(groups), cols_per_row):
+                        row = st.columns(cols_per_row)
+                        for col, (j, g) in zip(row, enumerate(groups[i:i+cols_per_row], start=i+1)):
+                            with col:
+                                st.markdown(f"### Gruppe {j}")
+                                for name, _ in g:
                                     st.write(name)
                                     img = find_image(name)
                                     if img:
-                                        st.image(img, width=100)
-                                    else:
-                                        st.caption("❌ Intet billede")
-
-            else:  # Præsentationsmode
-                group_size = st.number_input(
-                    "Hvor mange personer pr. gruppe?", min_value=2, max_value=10, value=3
-                )
-
-                # Alle studerende er automatisk "til stede" i præsentationsmode
-                students = [(row["Navn"], row["Semester"]) for _, row in df.iterrows()]
-                groups = make_groups(students, group_size)
-
-                st.markdown("## 📺 Præsentationsmode")
-                cols_per_row = 8  # fast 8 grupper pr. række
-
-                for i in range(0, len(groups), cols_per_row):
-                    row = st.columns(cols_per_row)
-                    for col, (j, g) in zip(row, enumerate(groups[i:i+cols_per_row], start=i+1)):
-                        with col:
-                            st.markdown(f"### Gruppe {j}")
-                            for name, _ in g:
-                                st.write(name)
-                                img = find_image(name)
-                                if img:
-                                    st.image(img, width=70)  # mindre billede, så flere kan være på skærmen
+                                        st.image(img, width=70)
