@@ -10,18 +10,20 @@ st.markdown(
     """
     Upload en CSV med dine studerende (to kolonner: **Navn,Semester**).  
     Sørg for at du har en mappe kaldet **billeder af studerende/** med et billede til hver studerende, 
-    hvor filnavnet matcher navnet i CSV (fx *Anders.jpg*).
+    hvor filnavnet matcher navnet i CSV (fx *Anders.png* eller *Anders.jpg*).
     """
 )
 
-# Funktion til at finde billeder (prøver flere filtyper + viser debug-info)
+# Funktion til at finde billeder (uanset filendelse)
 def find_image(name, folder="billeder af studerende"):
-    for ext in [".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"]:
-        path = os.path.join(folder, f"{name}{ext}")
-        if os.path.exists(path):
-            return path
-    # Debug hvis intet blev fundet
-    st.caption(f"❓ Søgte efter: {folder}/{name}.jpg|jpeg|png")
+    if not os.path.exists(folder):
+        st.warning(f"Mappen '{folder}' findes ikke i projektet.")
+        return None
+    for file in os.listdir(folder):
+        base, ext = os.path.splitext(file)
+        if base == str(name) and ext.lower() in [".jpg", ".jpeg", ".png"]:
+            return os.path.join(folder, file)
+    st.caption(f"❓ Intet billede fundet til: {name}")
     return None
 
 # Upload CSV
