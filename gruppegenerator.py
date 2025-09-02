@@ -20,13 +20,18 @@ if file:
     try:
         # Automatisk detektering af separator (virker til både , og ;)
         df = pd.read_csv(file, sep=None, engine="python")
+        # Rens kolonnenavne (fjerner BOM og mellemrum)
+        df.columns = df.columns.str.strip().str.replace("\ufeff", "")
     except Exception as e:
         st.error(f"Kunne ikke læse CSV-filen: {e}")
         df = None
 
     if df is not None:
         if not {"Navn", "Semester"}.issubset(df.columns):
-            st.error("CSV skal indeholde kolonnerne 'Navn' og 'Semester'")
+            st.error(
+                "CSV skal indeholde kolonnerne 'Navn' og 'Semester'. "
+                f"Jeg fandt i stedet: {list(df.columns)}"
+            )
         else:
             students = [(row["Navn"], row["Semester"]) for _, row in df.iterrows()]
 
