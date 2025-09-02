@@ -9,13 +9,13 @@ st.title("🎲 Tilfældig Gruppegenerator med billeder")
 st.markdown(
     """
     Upload en CSV med dine studerende (to kolonner: **Navn,Semester**).  
-    Sørg for at du har en mappe kaldet **billeder af studerende/** med et billede til hver studerende, 
+    Sørg for at du har en mappe kaldet **Billeder af studerende/** med et billede til hver studerende, 
     hvor filnavnet matcher navnet i CSV (fx *Anders.png* eller *Anders.jpg*).
     """
 )
 
 # Funktion til at finde billeder (uanset filendelse)
-def find_image(name, folder="billeder af studerende"):
+def find_image(name, folder="Billeder af studerende"):
     if not os.path.exists(folder):
         st.warning(f"Mappen '{folder}' findes ikke i projektet.")
         return None
